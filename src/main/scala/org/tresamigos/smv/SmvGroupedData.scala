@@ -921,6 +921,29 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
     }
   }
 
+  private[smv] def addExpectedWithNull(
+      colName: String,
+      expected: Set[String],
+      doFiltering: Boolean
+  ): DataFrame = {
+    val dffiltered = if (doFiltering) {
+      df.where(col(colName).isin(expected.toSeq.map { lit }: _*))
+    } else {
+      df
+    }
+    val nullCols = dffiltered.columns.diff(keys :+ colName).map { s =>
+      lit(null).cast(dffiltered.schema(s).dataType) as s
+    }
+    val nullRows = dffiltered
+      .select(keys.head, keys.tail: _*)
+      .distinct()
+      .withColumn(colName, explode(array(expected.toSeq.map { lit }: _*)))
+      .smvSelectPlus(nullCols: _*)
+      .select(dffiltered.columns.map { s =>
+        col(s)
+      }: _*)
+    dffiltered.unionAll(nullRows)
+  }
   /**
    * Fill in Null values with "previous" value according to an ordering
    *

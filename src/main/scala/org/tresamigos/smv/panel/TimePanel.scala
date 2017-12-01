@@ -308,6 +308,6 @@ case class TimePanel(start: PartialTime, end: PartialTime) extends Serializable 
       .smvGroupBy(keys.map { s =>
         df(s)
       }: _*)
-      .fillExpectedWithNull(timeColName, expectedValues, doFiltering)
+      .addExpectedWithNull(timeColName, expectedValues, doFiltering)
   }
 }
